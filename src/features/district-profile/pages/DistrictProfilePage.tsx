@@ -481,7 +481,7 @@ function getTrendLabel(status: ProductivityTrendSignal['status']): string {
   }
 }
 
-function ProductivityTrendSection({
+export function ProductivityTrendSection({
   district,
   crop,
   season,
@@ -569,7 +569,12 @@ function ProductivityTrendSection({
           <>
             <p className="mt-1 text-xs leading-5 text-slate-600">
               Actual comparable observations used by this direction analysis.
-              Bars share a zero baseline; values are shown explicitly.
+              Scale: 0–
+              {historyMaximum.toLocaleString('en-RW', {
+                maximumFractionDigits: 1,
+              })}{' '}
+              {history.records[0].unit}. Values are shown explicitly; only
+              reported years are included.
             </p>
             <ol
               aria-label="Observed district yield by agricultural year"
@@ -604,7 +609,7 @@ function ProductivityTrendSection({
                   </div>
                   <details className="mt-1 border-t border-slate-100 pt-1">
                     <summary className="min-h-9 cursor-pointer content-center text-xs font-semibold text-green-800 underline decoration-green-300 underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2">
-                      Observed source record Â· {record.period.year}
+                      Observed source record · {record.period.year}
                     </summary>
                     <div className="mt-2">
                       <EvidenceSourceMetadata record={record} />
@@ -770,6 +775,15 @@ export function DistrictProfilePage({
           )}
         </section>
 
+        <ProductivityTrendSection
+          crop={period.crop}
+          district={selectedDistrict}
+          onOpenEvidence={onOpenEvidence}
+          season={period.season}
+          signal={productivityTrend}
+          year={period.year}
+        />
+
         <DistrictCropPortfolio
           district={selectedDistrict}
           onOpenEvidence={(evidenceIds) =>
@@ -785,15 +799,6 @@ export function DistrictProfilePage({
             onOpenEvidence(undefined, evidenceIds)
           }
           season={period.season}
-          year={period.year}
-        />
-
-        <ProductivityTrendSection
-          crop={period.crop}
-          district={selectedDistrict}
-          onOpenEvidence={onOpenEvidence}
-          season={period.season}
-          signal={productivityTrend}
           year={period.year}
         />
 
@@ -876,6 +881,9 @@ export function DistrictProfilePage({
               >
                 Productivity Intelligence
               </h2>
+              <span className="text-xs font-medium text-slate-500">
+                Selected-crop productivity comparison
+              </span>
               <span
                 className={`inline-flex min-h-7 items-center rounded-md px-2.5 py-1 text-xs font-semibold ${getSignalClasses(signal.status)}`}
               >
@@ -957,54 +965,69 @@ export function DistrictProfilePage({
         </button>
       </section>
 
+      <ProductivityTrendSection
+        crop={period.crop}
+        district={insight.district}
+        onOpenEvidence={onOpenEvidence}
+        season={period.season}
+        signal={productivityTrend}
+        year={period.year}
+      />
+
       <section aria-labelledby="productivity-heading" className="space-y-3">
-        <div className="mb-3">
+        <div>
           <h2
             className="text-base font-semibold text-slate-900"
             id="productivity-heading"
           >
-            Productivity overview
+            Selected-crop production and area
           </h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Observed district production and cultivated area for this period.
+          <p className="mt-1 text-sm leading-6 text-slate-600">
+            Observed production and cultivated area provide context for this
+            crop in {period.year}, Season {period.season}.
           </p>
         </div>
-        <dl className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <dl className="grid gap-x-6 gap-y-3 border-y border-slate-200 py-3 sm:grid-cols-2">
+          <div>
             <dt className="flex items-center gap-1.5 text-xs text-slate-500">
               <EvidenceIndicatorIcon
                 className="size-3.5 shrink-0 text-agri-700"
                 indicator="crop_production"
               />
-              Production
+              Production · observed
             </dt>
-            <dd className="mt-1 text-xl font-bold text-forest-950 tabular-nums">
+            <dd className="mt-1 text-lg font-semibold text-slate-900 tabular-nums">
               {insight.totalProduction}
             </dd>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div>
             <dt className="flex items-center gap-1.5 text-xs text-slate-500">
               <EvidenceIndicatorIcon
                 className="size-3.5 shrink-0 text-agri-700"
                 indicator="cultivated_area"
               />
-              Cultivated area
+              Cultivated area · observed
             </dt>
-            <dd className="mt-1 text-xl font-bold text-forest-950 tabular-nums">
+            <dd className="mt-1 text-lg font-semibold text-slate-900 tabular-nums">
               {insight.cultivatedArea}
             </dd>
           </div>
         </dl>
-        <p className="mt-2 text-xs leading-5 text-slate-500">
-          NISR {source.dataset} report · Production:{' '}
-          {insight.productionRecord?.sourceReference.table ?? 'Unavailable'}
-          {insight.productionRecord?.sourceReference.page !== undefined &&
-            `, p. ${insight.productionRecord.sourceReference.page}`}
-          {' · Area: '}
-          {insight.areaRecord?.sourceReference.table ?? 'Unavailable'}
-          {insight.areaRecord?.sourceReference.page !== undefined &&
-            `, p. ${insight.areaRecord.sourceReference.page}`}
-        </p>
+        <details className="border-b border-slate-200 pb-3">
+          <summary className="min-h-9 cursor-pointer content-center text-xs font-semibold text-green-800 underline decoration-green-300 underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2">
+            View production and area source references
+          </summary>
+          <p className="mt-2 break-words text-xs leading-5 text-slate-600">
+            NISR {source.dataset} report · Production:{' '}
+            {insight.productionRecord?.sourceReference.table ?? 'Unavailable'}
+            {insight.productionRecord?.sourceReference.page !== undefined &&
+              `, p. ${insight.productionRecord.sourceReference.page}`}
+            {' · Area: '}
+            {insight.areaRecord?.sourceReference.table ?? 'Unavailable'}
+            {insight.areaRecord?.sourceReference.page !== undefined &&
+              `, p. ${insight.areaRecord.sourceReference.page}`}
+          </p>
+        </details>
       </section>
 
       <DistrictCropPortfolio
@@ -1021,13 +1044,10 @@ export function DistrictProfilePage({
         year={period.year}
       />
 
-      <ProductivityTrendSection
-        crop={period.crop}
-        district={insight.district}
+      <InterventionAreas
+        onNavigateMethodology={onNavigateMethodology}
         onOpenEvidence={onOpenEvidence}
-        season={period.season}
-        signal={productivityTrend}
-        year={period.year}
+        signals={irrigationSignals}
       />
 
       <section aria-labelledby="signal-evidence-heading">
@@ -1037,7 +1057,7 @@ export function DistrictProfilePage({
               className="text-base font-semibold text-slate-900"
               id="signal-evidence-heading"
             >
-              Evidence behind the signal
+              Supporting evidence and calculation
             </h2>
             <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
               The district yield and national reference are observed in the
@@ -1048,21 +1068,7 @@ export function DistrictProfilePage({
           </div>
           <EvidenceStatusBadge status="derived" />
         </div>
-        <button
-          className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-md px-2 text-sm font-semibold text-green-800 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
-          onClick={() => onOpenEvidence(signal)}
-          type="button"
-        >
-          View district evidence records
-          <ArrowRight aria-hidden="true" className="size-4" />
-        </button>
       </section>
-
-      <InterventionAreas
-        onNavigateMethodology={onNavigateMethodology}
-        onOpenEvidence={onOpenEvidence}
-        signals={irrigationSignals}
-      />
 
       <p className="border-t border-slate-200 pt-4 text-xs leading-5 text-slate-500">
         Source:{' '}

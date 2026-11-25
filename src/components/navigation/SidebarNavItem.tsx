@@ -6,6 +6,7 @@ interface SidebarNavItemProps {
   icon: LucideIcon
   label: NavigationItem
   active: boolean
+  collapsed?: boolean
   onClick: () => void
 }
 
@@ -13,10 +14,12 @@ export function SidebarNavItem({
   icon: Icon,
   label,
   active,
+  collapsed = false,
   onClick,
 }: SidebarNavItemProps) {
   return (
     <button
+      aria-label={collapsed ? label : undefined}
       aria-current={active ? 'page' : undefined}
       className={`flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-agri-700 focus-visible:ring-offset-2 lg:min-h-11 lg:gap-3 lg:px-3.5 ${
         active
@@ -34,7 +37,7 @@ export function SidebarNavItem({
         strokeWidth={1.8}
       />
 
-      <span>{label}</span>
+      <span className={collapsed ? 'lg:sr-only' : ''}>{label}</span>
     </button>
   )
 }

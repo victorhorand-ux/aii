@@ -1,10 +1,20 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { evidenceRecords } from '../../evidence/data/evidenceRecords'
+import { calculateAgriculturalSignals } from '../../intelligence/agriculturalSignalEngine'
 import { getDistrictYieldHistory } from '../../overview/utils/districtYieldHistory'
-import { DistrictProfilePage } from './DistrictProfilePage'
+import {
+  DistrictProfilePage,
+  ProductivityTrendSection,
+} from './DistrictProfilePage'
 
 const navigationProps = {
   onOpenEvidence: vi.fn(),
@@ -14,6 +24,78 @@ const navigationProps = {
 }
 
 afterEach(cleanup)
+
+describe('DistrictProfilePage information hierarchy', () => {
+  it('presents selected-crop analysis before portfolio, practices, and investigation evidence', () => {
+    render(
+      <DistrictProfilePage
+        {...navigationProps}
+        crop="maize"
+        season="season-a"
+        selectedDistrict="Nyarugenge"
+        year="2024-25"
+      />,
+    )
+
+    const headings = screen
+      .getAllByRole('heading', { level: 2 })
+      .map((heading) => heading.textContent?.trim())
+    const journey = [
+      'Productivity Intelligence',
+      'Productivity direction',
+      'Selected-crop production and area',
+      'District crop portfolio & productivity',
+      'District-wide seasonal practice profile',
+      'Investigation Areas',
+      'Supporting evidence and calculation',
+    ].map((heading) => headings.indexOf(heading))
+
+    expect(journey.every((index) => index >= 0)).toBe(true)
+    expect(journey).toEqual([...journey].sort((left, right) => left - right))
+    expect(
+      screen.getByText('Selected-crop productivity comparison'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/independent of the Overview crop filter/),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/not a selected crop/),
+    ).toBeInTheDocument()
+  })
+})
+
+function productivityTrend(
+  district: string,
+  crop: string,
+  season: 'A' | 'B' | 'C',
+  year = '2024/25',
+) {
+  const [, trend] = calculateAgriculturalSignals(evidenceRecords, {
+    district,
+    crop,
+    season,
+    year,
+  })
+  return trend
+}
+
+function expectDisplayedRecords(
+  list: HTMLElement,
+  records: readonly (typeof evidenceRecords)[number][],
+) {
+  const rows = within(list).getAllByRole('listitem')
+  expect(rows).toHaveLength(records.length)
+  records.forEach((record, index) => {
+    const row = rows[index]
+    expect(row).toHaveTextContent(record.period.year)
+    expect(row).toHaveTextContent(
+      `${record.value?.toLocaleString('en-RW', { maximumFractionDigits: 1 })} ${record.unit}`,
+    )
+    expect(
+      within(row).getByText(`Observed source record · ${record.period.year}`),
+    ).toBeInTheDocument()
+  })
+}
 
 describe('DistrictProfilePage productivity history', () => {
   it('shows only observed source records used by the selected district trend', () => {
@@ -40,25 +122,31 @@ describe('DistrictProfilePage productivity history', () => {
     const history = screen.getByRole('list', {
       name: 'Observed district yield by agricultural year',
     })
+    expectDisplayedRecords(history, expected.records)
     const rows = within(history).getAllByRole('listitem')
-    expect(rows).toHaveLength(expected.records.length)
-    expected.records.forEach((record, index) => {
-      expect(rows[index]).toHaveTextContent(record.period.year)
-      expect(rows[index]).toHaveTextContent(
-        `${record.value?.toLocaleString('en-RW', { maximumFractionDigits: 1 })} ${record.unit}`,
-      )
-      expect(rows[index]).toHaveTextContent('Observed source record')
-    })
+    const maximum = Math.max(
+      ...expected.records.map((record) => record.value ?? 0),
+    )
+    expect(
+      screen.getByText(
+        new RegExp(`Scale: 0–${maximum.toLocaleString('en-RW')} Kg/Ha`),
+      ),
+    ).toBeInTheDocument()
     expect(screen.getByText(/Derived net change/)).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /View trend evidence/ }),
     ).toBeInTheDocument()
 
     const firstDisclosure = within(rows[0]).getByText(/Observed source record/)
-    firstDisclosure.closest('details')?.querySelector('summary')?.click()
+    const summary = firstDisclosure.closest('details')?.querySelector('summary')
+    expect(summary).not.toBeNull()
+    if (summary) fireEvent.click(summary)
     expect(
       within(rows[0]).getByText(expected.records[0].id),
     ).toBeInTheDocument()
+    expect(
+      within(rows[0]).getByRole('link', { name: 'Open NISR source' }),
+    ).toHaveAttribute('href', expected.records[0].source.sourceUrl)
 
     rerender(
       <DistrictProfilePage
@@ -81,9 +169,7 @@ describe('DistrictProfilePage productivity history', () => {
       const updatedHistory = screen.getByRole('list', {
         name: 'Observed district yield by agricultural year',
       })
-      expect(within(updatedHistory).getAllByRole('listitem')).toHaveLength(
-        changedDistrictHistory.records.length,
-      )
+      expectDisplayedRecords(updatedHistory, changedDistrictHistory.records)
       expect(updatedHistory).not.toHaveTextContent('Nyarugenge')
     } else {
       expect(
@@ -95,6 +181,93 @@ describe('DistrictProfilePage productivity history', () => {
         changedDistrictHistory.message,
       )
     }
+  })
+
+  it('updates the exact observation series when crop and season change', () => {
+    const props = {
+      district: 'Nyarugenge',
+      crop: 'Maize',
+      season: 'A' as const,
+      year: '2024/25',
+      onOpenEvidence: vi.fn(),
+      signal: productivityTrend('Nyarugenge', 'Maize', 'A'),
+    }
+    const { rerender } = render(<ProductivityTrendSection {...props} />)
+
+    for (const selection of [
+      { crop: 'Beans', season: 'A' as const },
+      { crop: 'Maize', season: 'B' as const },
+    ]) {
+      const expected = getDistrictYieldHistory(
+        evidenceRecords,
+        'Nyarugenge',
+        selection.crop,
+        selection.season,
+        props.year,
+      )
+      expect(expected.status).toBe('available')
+      if (expected.status !== 'available') return
+
+      rerender(
+        <ProductivityTrendSection
+          {...props}
+          crop={selection.crop}
+          season={selection.season}
+          signal={productivityTrend(
+            'Nyarugenge',
+            selection.crop,
+            selection.season,
+          )}
+        />,
+      )
+
+      expectDisplayedRecords(
+        screen.getByRole('list', {
+          name: 'Observed district yield by agricultural year',
+        }),
+        expected.records,
+      )
+    }
+  })
+
+  it('withholds observations when signal record IDs or periods differ from history', () => {
+    const signal = productivityTrend('Nyarugenge', 'Maize', 'A')
+    const props = {
+      district: 'Nyarugenge',
+      crop: 'Maize',
+      season: 'A' as const,
+      year: '2024/25',
+      onOpenEvidence: vi.fn(),
+      signal,
+    }
+    const { rerender } = render(<ProductivityTrendSection {...props} />)
+
+    rerender(
+      <ProductivityTrendSection
+        {...props}
+        signal={{ ...signal, sourceRecordIds: ['unrelated-record-id'] }}
+      />,
+    )
+    expect(
+      screen.queryByRole('list', {
+        name: 'Observed district yield by agricultural year',
+      }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(
+      /do not match the periods used/,
+    )
+
+    rerender(
+      <ProductivityTrendSection
+        {...props}
+        signal={{ ...signal, periodsUsed: ['2022/23', '2024/25'] }}
+      />,
+    )
+    expect(
+      screen.queryByRole('list', {
+        name: 'Observed district yield by agricultural year',
+      }),
+    ).not.toBeInTheDocument()
   })
 
   it('does not render a historical series when matching evidence is insufficient', () => {
@@ -114,6 +287,37 @@ describe('DistrictProfilePage productivity history', () => {
         season="season-c"
         selectedDistrict="Nyarugenge"
         year="2024-25"
+      />,
+    )
+
+    expect(
+      screen.queryByRole('list', {
+        name: 'Observed district yield by agricultural year',
+      }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(
+      /No historical series is shown/,
+    )
+  })
+
+  it('does not draw a series when only one comparable observation exists', () => {
+    const history = getDistrictYieldHistory(
+      evidenceRecords,
+      'Nyarugenge',
+      'Maize',
+      'A',
+      '2023/24',
+    )
+    expect(history.status).toBe('insufficient')
+
+    render(
+      <ProductivityTrendSection
+        crop="Maize"
+        district="Nyarugenge"
+        onOpenEvidence={vi.fn()}
+        season="A"
+        signal={productivityTrend('Nyarugenge', 'Maize', 'A', '2023/24')}
+        year="2023/24"
       />,
     )
 

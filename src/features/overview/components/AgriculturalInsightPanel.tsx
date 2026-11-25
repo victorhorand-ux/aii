@@ -270,17 +270,17 @@ export function AgriculturalInsightPanel({
                   is drawn.
                 </p>
               )}
-              <p className="mt-2 text-[11px] leading-4 text-slate-500">
+              {/* <p className="mt-2 text-[11px] leading-4 text-slate-500">
                 This measure covers district-wide crop activity, not the
                 selected crop alone.
                 {districtIrrigation &&
                   ` District source: ${districtIrrigation.sourceReference.table}.`}
                 {nationalIrrigation &&
                   ` National source: ${nationalIrrigation.sourceReference.table}.`}
-              </p>
+              </p> */}
             </section>
 
-            <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+            {/* <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
               <button
                 className="inline-flex min-h-11 items-center justify-between rounded-lg bg-forest-950 px-3.5 text-sm font-semibold text-white transition-colors hover:bg-forest-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-agri-700 focus-visible:ring-offset-2"
                 onClick={onOpenInvestigationBrief}
@@ -308,7 +308,7 @@ export function AgriculturalInsightPanel({
                 </span>
                 <ArrowRight aria-hidden="true" className="size-4" />
               </button>
-            </div>
+            </div> */}
           </>
         ) : (
           <div className="mt-3">
@@ -326,7 +326,7 @@ export function AgriculturalInsightPanel({
           </div>
         )}
 
-        {insight && (
+        {/* {insight && (
           <div className="mt-5 border-t border-slate-200 pt-4">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               Source
@@ -351,7 +351,7 @@ export function AgriculturalInsightPanel({
               </p>
             )}
           </div>
-        )}
+        )} */}
 
         {!insight && selectedDistrict && (
           <button
