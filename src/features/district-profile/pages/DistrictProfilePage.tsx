@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { ArrowLeft, ArrowRight, MapPin } from 'lucide-react'
 
 import { EvidenceStatusBadge } from '../../evidence/components/EvidenceStatusBadge'
@@ -14,6 +14,7 @@ import type { AgriculturalSeason } from '../../../types/data-contract'
 import type { InterventionSignal } from '../../../types/intervention'
 import type { EvidenceRecord } from '../../evidence/types/evidence.types'
 import { getDistrictInsight } from '../../overview/data/districtInsights'
+import { getDistrictYieldHistory } from '../../overview/utils/districtYieldHistory'
 import { calculateAgriculturalSignals } from '../../intelligence/agriculturalSignalEngine'
 import { DistrictComparisonBar } from '../components/DistrictComparisonBar'
 import { DistrictCropPortfolio } from '../components/DistrictCropPortfolio'
@@ -481,12 +482,49 @@ function getTrendLabel(status: ProductivityTrendSignal['status']): string {
 }
 
 function ProductivityTrendSection({
+  district,
+  crop,
+  season,
+  year,
   signal,
   onOpenEvidence,
 }: {
+  district: string
+  crop: string
+  season: AgriculturalSeason
+  year: string
   signal: ProductivityTrendSignal
   onOpenEvidence: (signal?: AgriculturalSignal) => void
 }) {
+  const history = useMemo(
+    () =>
+      getDistrictYieldHistory(evidenceRecords, district, crop, season, year),
+    [crop, district, season, year],
+  )
+  const historyPeriods =
+    history.status === 'available'
+      ? history.records.map((record) => record.period.year).sort()
+      : []
+  const signalPeriods = [...signal.periodsUsed].sort()
+  const historySourceIds =
+    history.status === 'available'
+      ? history.records.map((record) => record.id).sort()
+      : []
+  const signalSourceIds = [...signal.sourceRecordIds].sort()
+  const historyMatchesSignal =
+    history.status === 'available' &&
+    historyPeriods.length === signalPeriods.length &&
+    historySourceIds.length === signalSourceIds.length &&
+    historyPeriods.every((period, index) => period === signalPeriods[index]) &&
+    historySourceIds.every((id, index) => id === signalSourceIds[index])
+  const historyMaximum =
+    history.status === 'available'
+      ? history.records.reduce(
+          (maximum, record) => Math.max(maximum, record.value ?? 0),
+          0,
+        )
+      : 0
+
   return (
     <section aria-labelledby="yield-trend-heading">
       <div className="mb-3 flex flex-wrap items-center gap-3">
@@ -508,10 +546,76 @@ function ProductivityTrendSection({
       </p>
       {signal.netChange !== undefined && (
         <p className="mt-2 text-sm text-slate-700">
-          Earliest to latest change: {signal.netChange > 0 ? '+' : ''}
+          Derived net change (earliest to latest):{' '}
+          {signal.netChange > 0 ? '+' : ''}
           {signal.netChange.toLocaleString('en-RW')} {signal.unit}
         </p>
       )}
+      <div className="mt-4 border-t border-slate-200 pt-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <h3 className="text-sm font-semibold text-slate-900">
+            Reported district yield by year
+          </h3>
+          <span className="text-xs text-slate-600">Observed values</span>
+        </div>
+        {history.status !== 'available' || !historyMatchesSignal ? (
+          <p className="mt-2 text-sm leading-6 text-slate-600" role="status">
+            {history.status === 'available'
+              ? 'Historical observations do not match the periods used by this trend. No series is shown.'
+              : `${history.message} No historical series is shown.`}
+            {history.status !== 'available' ? ` ${history.detail}` : ''}
+          </p>
+        ) : (
+          <>
+            <p className="mt-1 text-xs leading-5 text-slate-600">
+              Actual comparable observations used by this direction analysis.
+              Bars share a zero baseline; values are shown explicitly.
+            </p>
+            <ol
+              aria-label="Observed district yield by agricultural year"
+              className="mt-3 space-y-3"
+            >
+              {history.records.map((record) => (
+                <li className="min-w-0" key={record.id}>
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <span className="text-sm font-medium text-slate-700">
+                      {record.period.year}
+                    </span>
+                    <span className="text-sm font-semibold tabular-nums text-slate-900">
+                      {record.value?.toLocaleString('en-RW', {
+                        maximumFractionDigits: 1,
+                      })}{' '}
+                      {record.unit}
+                    </span>
+                  </div>
+                  <div
+                    aria-hidden="true"
+                    className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100"
+                  >
+                    <div
+                      className="h-full rounded-full bg-agri-700"
+                      style={{
+                        width:
+                          historyMaximum === 0
+                            ? '0%'
+                            : `${((record.value ?? 0) / historyMaximum) * 100}%`,
+                      }}
+                    />
+                  </div>
+                  <details className="mt-1 border-t border-slate-100 pt-1">
+                    <summary className="min-h-9 cursor-pointer content-center text-xs font-semibold text-green-800 underline decoration-green-300 underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2">
+                      Observed source record Â· {record.period.year}
+                    </summary>
+                    <div className="mt-2">
+                      <EvidenceSourceMetadata record={record} />
+                    </div>
+                  </details>
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
+      </div>
       {signal.evidenceIds.length > 0 && (
         <button
           className="mt-2 inline-flex min-h-10 items-center gap-2 rounded-md px-2 text-sm font-semibold text-green-800 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
@@ -685,8 +789,12 @@ export function DistrictProfilePage({
         />
 
         <ProductivityTrendSection
+          crop={period.crop}
+          district={selectedDistrict}
           onOpenEvidence={onOpenEvidence}
+          season={period.season}
           signal={productivityTrend}
+          year={period.year}
         />
 
         <InterventionAreas
@@ -914,8 +1022,12 @@ export function DistrictProfilePage({
       />
 
       <ProductivityTrendSection
+        crop={period.crop}
+        district={insight.district}
         onOpenEvidence={onOpenEvidence}
+        season={period.season}
         signal={productivityTrend}
+        year={period.year}
       />
 
       <section aria-labelledby="signal-evidence-heading">
