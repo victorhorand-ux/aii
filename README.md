@@ -3,7 +3,7 @@
 Agricultural Intervention Intelligence (AII) is a frontend decision-support prototype for exploring Rwanda’s agricultural productivity evidence ahead of the NISR Rwanda Big Data Hackathon 2026. It connects selected district and national observations from NISR’s Seasonal Agricultural Survey (SAS) and Agricultural Household Survey (AHS), shows comparable differences and investigation signals, and keeps source references available so users can inspect the evidence behind a finding.
 
 - **Live application:** (https://agri-intervention-intelligence.netlify.app/)
-- **Repository:** [github.com/remy-shingiro/aii-agri-intervention](https://github.com/remy-shingiro/aii-agri-intervention)
+- **Repository:** [https://github.com/victorhorand-ux/aii](https://github.com/victorhorand-ux/aii)
 
 ## Getting started
 

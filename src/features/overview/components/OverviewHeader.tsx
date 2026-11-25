@@ -77,28 +77,38 @@ export function OverviewHeader({
   onFilterChange,
 }: OverviewHeaderProps) {
   return (
-    <section className="space-y-4">
-      <div className="space-y-2">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-agri-700">
+    <section className="space-y-4 sm:space-y-5">
+      <div className="rounded-2xl bg-forest-950 px-5 py-6 text-white sm:px-7 sm:py-8">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-sage-100">
           Agricultural intelligence
         </p>
 
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-forest-950 sm:text-4xl">
+          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Rwanda Agricultural Overview
           </h1>
 
-          <p className="mt-2 text-base font-semibold tracking-tight text-forest-900 sm:text-lg">
+          <p className="mt-2 text-base font-semibold tracking-tight text-white sm:text-lg">
             Find the gaps. Understand the evidence.
           </p>
-          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-sage-100">
             Explore Rwanda’s agricultural productivity through published NISR
             statistics, with every finding linked to its source.
           </p>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="rounded-2xl border border-slate-200 border-t-4 border-t-agri-700 bg-white p-4 shadow-sm sm:p-5">
+        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h2 className="text-sm font-bold text-forest-950">
+            Analysis context
+          </h2>
+          <p className="text-xs leading-5 text-slate-500">
+            Crop, season, and year determine the analysis context for district
+            evidence and national signals. District selection focuses
+            district-level views without changing national results.
+          </p>
+        </div>
         <div
           role="group"
           aria-label="Agricultural observation filters"

@@ -137,7 +137,9 @@ export function AgriculturalInsightPanel({
       aria-label="District agricultural evidence"
       className="min-w-0 xl:h-full"
     >
-      <section className="h-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <section
+        className={`h-full rounded-xl border border-slate-200 bg-white p-4 sm:p-5 ${selectedDistrict ? 'border-l-4 border-l-agri-700' : ''}`}
+      >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[11px] font-bold uppercase tracking-wider text-agri-700">
@@ -174,7 +176,7 @@ export function AgriculturalInsightPanel({
 
             <section
               aria-label="Yield comparison"
-              className="mt-4 border-y border-slate-200 py-4"
+              className="mt-4 rounded-xl bg-warm-50 p-3 sm:p-4"
             >
               <h3 className="mb-3 flex items-center gap-2 text-xs font-semibold text-slate-700">
                 <Sprout aria-hidden="true" className="size-4 text-agri-700" />

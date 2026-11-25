@@ -256,7 +256,7 @@ export function OverviewPage({
   ]
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 sm:space-y-7">
       <OverviewHeader
         districtSearch={districtSearch}
         filters={filters}
@@ -267,25 +267,28 @@ export function OverviewPage({
 
       <section
         aria-labelledby="overview-map-heading"
-        className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4"
+        className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
       >
-        <header className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+        <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3 border-b border-slate-200 px-4 py-4 sm:px-5 sm:py-5">
           <div className="min-w-0">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-agri-700">
+              District exploration
+            </p>
             <h2
               id="overview-map-heading"
-              className="text-base font-bold tracking-tight text-forest-950 sm:text-lg"
+              className="mt-1 text-lg font-bold tracking-tight text-forest-950 sm:text-xl"
             >
               {hasObservations
                 ? `${cropLabel} yield comparison by district`
                 : 'District map'}
             </h2>
-            <p className="mt-1 text-xs leading-5 text-slate-600">
+            <p className="mt-1 text-sm leading-5 text-slate-600">
               {selectedDistrict
                 ? `${selectedDistrict} selected · choose another district on the map or search above`
                 : 'Select a district on the map or with the search above to inspect its evidence.'}
             </p>
           </div>
-          <p className="rounded-full bg-sage-50 px-3 py-1.5 text-xs font-semibold text-forest-900">
+          <p className="rounded-full border border-slate-200 bg-warm-50 px-3 py-1.5 text-xs font-semibold text-forest-900">
             Rwanda <span aria-hidden="true">·</span> {seasonLabel}{' '}
             <span aria-hidden="true">·</span> {yearLabel}
           </p>
@@ -296,7 +299,7 @@ export function OverviewPage({
           keyboard. The map can also be explored with pointer controls.
         </p>
 
-        <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-stretch">
+        <div className="grid min-w-0 gap-4 p-3 sm:gap-5 sm:p-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(340px,0.9fr)] xl:items-stretch">
           <DeferredDistrictMapPanel
             crop={filters.crop}
             districtSearch={districtSearch}
@@ -342,12 +345,15 @@ export function OverviewPage({
 
       <section
         aria-labelledby="national-intelligence-heading"
-        className="space-y-3"
+        className="space-y-4 rounded-2xl border border-forest-900/15 bg-sage-50 p-4 sm:p-5"
       >
-        <div>
+        <div className="border-b border-forest-900/10 pb-4">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-agri-700">
+            National scope
+          </p>
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <h2
-              className="text-base font-bold tracking-tight text-forest-950"
+              className="mt-1 text-lg font-bold tracking-tight text-forest-950 sm:text-xl"
               id="national-intelligence-heading"
             >
               National Agricultural Intelligence
@@ -369,7 +375,7 @@ export function OverviewPage({
         >
           {intelligenceMetrics.map((metric, index) => (
             <article
-              className={`min-w-0 rounded-xl border bg-white p-4 shadow-sm ${
+              className={`min-w-0 rounded-xl border bg-white p-4 ${
                 index === 1 ? 'border-amber-200' : 'border-slate-200'
               }`}
               key={metric.label}
