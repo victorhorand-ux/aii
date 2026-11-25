@@ -61,11 +61,10 @@ export function DistrictSearchInput({
   }
 
   const matchingDistricts = useMemo(() => {
-    if (!searchTerm) return openOnFocus ? districts.slice(0, 8) : []
+    if (!searchTerm) return openOnFocus ? districts : []
 
     return districts
       .filter((district) => district.toLowerCase().includes(searchTerm))
-      .slice(0, 8)
   }, [districts, openOnFocus, searchTerm])
 
   useEffect(() => {
@@ -189,7 +188,7 @@ export function DistrictSearchInput({
     })
   }
 
-  const showSuggestions = isOpen && Boolean(searchTerm)
+  const showSuggestions = isOpen && (Boolean(searchTerm) || openOnFocus)
 
   const activeDescendant =
     highlightedIndex >= 0
