@@ -1,9 +1,10 @@
 import { useId, useMemo, useState } from 'react'
-import { ArrowLeft, ArrowRight, MapPin } from 'lucide-react'
+import { ArrowRight, MapPin } from 'lucide-react'
 
 import { EvidenceStatusBadge } from '../../evidence/components/EvidenceStatusBadge'
 import { EvidenceIndicatorIcon } from '../../evidence/components/EvidenceIndicatorIcon'
 import { evidenceRecords } from '../../evidence/data/evidenceRecords'
+import { DistrictSearchInput } from '../../overview/components/DistrictSearchInput'
 import type {
   AgriculturalSignal,
   IrrigationInvestigationSignal,
@@ -19,7 +20,10 @@ import { calculateAgriculturalSignals } from '../../intelligence/agriculturalSig
 import { DistrictComparisonBar } from '../components/DistrictComparisonBar'
 import { DistrictCropPortfolio } from '../components/DistrictCropPortfolio'
 import { DistrictSeasonalPracticeProfile } from '../components/DistrictSeasonalPracticeProfile'
-import { getDistrictMetadata } from '../data/districtMetadata'
+import {
+  districtMetadata,
+  getDistrictMetadata,
+} from '../data/districtMetadata'
 import {
   getIrrigationEvidenceTrail,
   type IrrigationEvidenceTrailRecords,
@@ -29,14 +33,43 @@ interface DistrictProfilePageProps {
   crop: string
   season: string
   selectedDistrict?: string
+  onDistrictSelect: (district?: string) => void
   year: string
   onOpenEvidence: (
     signal?: AgriculturalSignal,
     evidenceIds?: readonly string[],
   ) => void
-  onNavigateOverview: () => void
   onNavigateMethodology: () => void
-  onOpenInvestigationBrief: () => void
+}
+
+const supportedDistricts = districtMetadata
+  .map(({ district }) => district)
+  .sort((first, second) => first.localeCompare(second))
+
+function DistrictProfileSelector({
+  value,
+  onChange,
+  onSelect,
+}: {
+  value: string
+  onChange: (value: string) => void
+  onSelect: (district?: string) => void
+}) {
+  return (
+    <div className="order-2 w-full min-w-0 max-w-xl sm:w-[min(28rem,45%)]">
+      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-600">
+        Select district
+      </p>
+      <DistrictSearchInput
+        districts={supportedDistricts}
+        onChange={onChange}
+        onClearSelection={false}
+        openOnFocus
+        onSelect={(district) => onSelect(district || undefined)}
+        value={value}
+      />
+    </div>
+  )
 }
 
 function getCropLabel(value: string): string {
@@ -643,12 +676,27 @@ export function DistrictProfilePage({
   crop,
   season,
   selectedDistrict,
+  onDistrictSelect,
   year,
   onOpenEvidence,
-  onNavigateOverview,
   onNavigateMethodology,
-  onOpenInvestigationBrief,
 }: DistrictProfilePageProps) {
+  const [districtSearchState, setDistrictSearchState] = useState({
+    district: selectedDistrict,
+    value: selectedDistrict ?? '',
+  })
+  const districtSearch =
+    districtSearchState.district === selectedDistrict
+      ? districtSearchState.value
+      : (selectedDistrict ?? '')
+  const handleDistrictSearchChange = (value: string) => {
+    setDistrictSearchState({ district: selectedDistrict, value })
+  }
+  const handleDistrictSelect = (district?: string) => {
+    setDistrictSearchState({ district, value: district ?? '' })
+    onDistrictSelect(district)
+  }
+
   const candidate = selectedDistrict
     ? getDistrictInsight(selectedDistrict, crop, season, year)
     : undefined
@@ -668,14 +716,7 @@ export function DistrictProfilePage({
           its profile. This page displays only district observations in the
           connected NISR source.
         </p>
-        <button
-          className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-md px-2 text-sm font-semibold text-green-800 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
-          onClick={onNavigateOverview}
-          type="button"
-        >
-          <ArrowLeft aria-hidden="true" className="size-4" />
-          Back to Overview
-        </button>
+        <DistrictProfileSelector onChange={handleDistrictSearchChange} onSelect={handleDistrictSelect} value={districtSearch} />
       </section>
     )
   }
@@ -695,36 +736,9 @@ export function DistrictProfilePage({
 
     return (
       <div className="space-y-6">
-        <header className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <button
-              className="inline-flex min-h-10 items-center gap-2 rounded-md text-sm font-medium text-slate-600 transition-colors hover:text-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
-              onClick={onNavigateOverview}
-              type="button"
-            >
-              <ArrowLeft aria-hidden="true" className="size-4" />
-              Back to Overview
-            </button>
-            <div className="flex flex-wrap items-center gap-1">
-              <button
-                className="inline-flex min-h-10 items-center gap-2 rounded-md px-2 text-sm font-semibold text-green-800 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
-                onClick={() => onOpenEvidence()}
-                type="button"
-              >
-                Explore evidence
-                <ArrowRight aria-hidden="true" className="size-4" />
-              </button>
-              <button
-                className="inline-flex min-h-10 items-center gap-2 rounded-md px-2 text-sm font-semibold text-green-800 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
-                onClick={onOpenInvestigationBrief}
-                type="button"
-              >
-                Investigation brief
-                <ArrowRight aria-hidden="true" className="size-4" />
-              </button>
-            </div>
-          </div>
-          <div className="border-b border-slate-200 pb-5">
+        <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 border-b border-slate-200 pb-5">
+          <DistrictProfileSelector onChange={handleDistrictSearchChange} onSelect={handleDistrictSelect} value={districtSearch} />
+          <div className="order-1 min-w-0 flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-green-800">
               District profile
             </p>
@@ -817,37 +831,10 @@ export function DistrictProfilePage({
 
   return (
     <div className="space-y-6">
-      <header className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <button
-            className="inline-flex min-h-10 items-center gap-2 rounded-md text-sm font-medium text-slate-600 transition-colors hover:text-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
-            onClick={onNavigateOverview}
-            type="button"
-          >
-            <ArrowLeft aria-hidden="true" className="size-4" />
-            Back to Overview
-          </button>
-          <div className="flex flex-wrap items-center gap-1">
-            <button
-              className="inline-flex min-h-10 items-center gap-2 rounded-md px-2 text-sm font-semibold text-green-800 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
-              onClick={() => onOpenEvidence()}
-              type="button"
-            >
-              Explore evidence
-              <ArrowRight aria-hidden="true" className="size-4" />
-            </button>
-            <button
-              className="inline-flex min-h-10 items-center gap-2 rounded-md px-2 text-sm font-semibold text-green-800 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2"
-              onClick={onOpenInvestigationBrief}
-              type="button"
-            >
-              Investigation brief
-              <ArrowRight aria-hidden="true" className="size-4" />
-            </button>
-          </div>
-        </div>
+      <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 border-b border-slate-200 pb-5">
+        <DistrictProfileSelector onChange={handleDistrictSearchChange} onSelect={handleDistrictSelect} value={districtSearch} />
 
-        <div className="border-b border-slate-200 pb-5">
+        <div className="order-1 min-w-0 flex-1">
           <p className="text-[11px] font-bold uppercase tracking-wider text-agri-700">
             District profile
           </p>

@@ -15,7 +15,7 @@ const SIDEBAR_PREFERENCE_KEY = 'aii-sidebar-collapsed'
 const SIDEBAR_WIDE_VIEWPORT = 1280
 
 function getInitialSidebarState(): { collapsed: boolean; manual: boolean } {
-  if (typeof window === 'undefined') return { collapsed: true, manual: false }
+  if (typeof window === 'undefined') return { collapsed: true, manual: true }
 
   try {
     const preference = window.localStorage.getItem(SIDEBAR_PREFERENCE_KEY)

@@ -14,6 +14,8 @@ interface DistrictSearchInputProps {
   value: string
   onChange: (value: string) => void
   onSelect: (district: string) => void
+  onClearSelection?: boolean
+  openOnFocus?: boolean
   placeholder?: string
 }
 
@@ -22,6 +24,8 @@ export function DistrictSearchInput({
   value,
   onChange,
   onSelect,
+  onClearSelection = true,
+  openOnFocus = false,
   placeholder = 'Search district',
 }: DistrictSearchInputProps) {
   const inputId = useId()
@@ -57,14 +61,12 @@ export function DistrictSearchInput({
   }
 
   const matchingDistricts = useMemo(() => {
-    if (!searchTerm) {
-      return []
-    }
+    if (!searchTerm) return openOnFocus ? districts.slice(0, 8) : []
 
     return districts
       .filter((district) => district.toLowerCase().includes(searchTerm))
       .slice(0, 8)
-  }, [districts, searchTerm])
+  }, [districts, openOnFocus, searchTerm])
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
@@ -171,14 +173,14 @@ export function DistrictSearchInput({
   }
 
   const handleFocus = () => {
-    if (searchTerm) {
+    if (searchTerm || openOnFocus) {
       setIsOpen(true)
     }
   }
 
   const handleClear = () => {
     onChange('')
-    onSelect('')
+    if (onClearSelection) onSelect('')
     setIsOpen(false)
     setHighlightedIndex(-1)
 

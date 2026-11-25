@@ -142,12 +142,9 @@ export function App() {
               crop={overviewFilters.crop}
               season={overviewFilters.season}
               selectedDistrict={selectedDistrict}
+              onDistrictSelect={setSelectedDistrict}
               year={overviewFilters.year}
               onOpenEvidence={openProfileEvidence}
-              onOpenInvestigationBrief={() =>
-                setActivePage('Investigation Brief')
-              }
-              onNavigateOverview={() => setActivePage('Overview')}
               onNavigateMethodology={() => {
                 setEvidenceContext(undefined)
                 setActivePage('Data & Methodology')

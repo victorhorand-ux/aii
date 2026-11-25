@@ -18,6 +18,7 @@ import {
 
 const navigationProps = {
   onOpenEvidence: vi.fn(),
+  onDistrictSelect: vi.fn(),
   onNavigateOverview: vi.fn(),
   onNavigateMethodology: vi.fn(),
   onOpenInvestigationBrief: vi.fn(),
@@ -26,6 +27,59 @@ const navigationProps = {
 afterEach(cleanup)
 
 describe('DistrictProfilePage information hierarchy', () => {
+  it('selects a supported district through the shared search control', () => {
+    const onDistrictSelect = vi.fn()
+    const { rerender } = render(
+      <DistrictProfilePage
+        {...navigationProps}
+        onDistrictSelect={onDistrictSelect}
+        crop="maize"
+        season="season-a"
+        selectedDistrict="Nyarugenge"
+        year="2024-25"
+      />,
+    )
+
+    const search = screen.getByRole('combobox', { name: 'Search district' })
+    fireEvent.change(search, { target: { value: 'Gasabo' } })
+    fireEvent.click(screen.getByRole('option', { name: 'Gasabo' }))
+
+    expect(onDistrictSelect).toHaveBeenCalledWith('Gasabo')
+    rerender(
+      <DistrictProfilePage
+        {...navigationProps}
+        onDistrictSelect={onDistrictSelect}
+        crop="maize"
+        season="season-a"
+        selectedDistrict="Gasabo"
+        year="2024-25"
+      />,
+    )
+    expect(screen.getByRole('combobox', { name: 'Search district' })).toHaveValue(
+      'Gasabo',
+    )
+  })
+
+  it('clears the query without clearing the selected district or profile data', () => {
+    const onDistrictSelect = vi.fn()
+    render(
+      <DistrictProfilePage
+        {...navigationProps}
+        onDistrictSelect={onDistrictSelect}
+        crop="maize"
+        season="season-a"
+        selectedDistrict="Nyarugenge"
+        year="2024-25"
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear district search' }))
+
+    expect(onDistrictSelect).not.toHaveBeenCalled()
+    expect(screen.getByRole('heading', { name: 'Nyarugenge' })).toBeInTheDocument()
+    expect(screen.getByText(/Observed NISR district and national yields/)).toBeInTheDocument()
+  })
+
   it('presents selected-crop analysis before portfolio, practices, and investigation evidence', () => {
     render(
       <DistrictProfilePage
