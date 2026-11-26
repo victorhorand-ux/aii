@@ -43,7 +43,9 @@ describe('application shell', () => {
     render(<App />)
 
     expect(
-      screen.getByRole('heading', { name: 'Rwanda Agricultural Overview' }),
+      screen.getByRole('heading', {
+        name: "Explore Rwanda's Agriculture. Discover the Opportunities.",
+      }),
     ).toBeInTheDocument()
     expect(screen.getByLabelText('Crop')).toHaveValue('maize')
     expect(screen.getByLabelText('Season')).toHaveValue('season-a')

@@ -1,5 +1,5 @@
 import { ArrowRight, ArrowUpRight } from 'lucide-react'
-import { useId } from 'react'
+import { useId, useState } from 'react'
 
 import { EvidenceStatusBadge } from '../../evidence/components/EvidenceStatusBadge'
 import { EvidenceIndicatorIcon } from '../../evidence/components/EvidenceIndicatorIcon'
@@ -399,6 +399,9 @@ export function DistrictCropPortfolio({
   onOpenEvidence,
 }: DistrictCropPortfolioProps) {
   const headingId = useId()
+  const context = `${district}|${season}|${year}`
+  const [pagination, setPagination] = useState({ context, count: 1 })
+  const visibleCount = pagination.context === context ? pagination.count : 1
   const portfolio = getDistrictCropPortfolio(
     evidenceRecords,
     district,
@@ -445,7 +448,7 @@ export function DistrictCropPortfolio({
             year={year}
           />
           <div className="space-y-2">
-            {portfolio.map((entry) => (
+            {portfolio.slice(0, visibleCount).map((entry) => (
               <CropCard
                 district={district}
                 entry={entry}
@@ -454,6 +457,15 @@ export function DistrictCropPortfolio({
               />
             ))}
           </div>
+          {portfolio.length > visibleCount && (
+            <button
+              className="inline-flex min-h-10 items-center rounded-lg border border-slate-300 px-4 text-sm font-semibold text-forest-950 hover:bg-sage-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-agri-700 focus-visible:ring-offset-2"
+              onClick={() => setPagination({ context, count: visibleCount + 1 })}
+              type="button"
+            >
+              Show more
+            </button>
+          )}
         </>
       )}
     </section>

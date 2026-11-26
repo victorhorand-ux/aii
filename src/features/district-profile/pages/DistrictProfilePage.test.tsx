@@ -11,6 +11,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { evidenceRecords } from '../../evidence/data/evidenceRecords'
 import { calculateAgriculturalSignals } from '../../intelligence/agriculturalSignalEngine'
 import { getDistrictYieldHistory } from '../../overview/utils/districtYieldHistory'
+import { DistrictCropPortfolio } from '../components/DistrictCropPortfolio'
 import {
   DistrictProfilePage,
   ProductivityTrendSection,
@@ -27,6 +28,37 @@ const navigationProps = {
 afterEach(cleanup)
 
 describe('DistrictProfilePage information hierarchy', () => {
+  it('reveals crop cards by responsive row and resets the list when district changes', () => {
+    window.innerWidth = 1440
+    const { rerender } = render(
+      <DistrictCropPortfolio
+        district="Nyarugenge"
+        onOpenEvidence={() => undefined}
+        season="A"
+        year="2024/25"
+      />,
+    )
+    const section = screen
+      .getByRole('heading', { name: 'District crop portfolio & productivity' })
+      .closest('section')
+    expect(section).not.toBeNull()
+    if (!section) return
+    const cards = () => within(section).getAllByRole('article').length
+    expect(cards()).toBe(1)
+    fireEvent.click(within(section).getByRole('button', { name: 'Show more' }))
+    expect(cards()).toBe(2)
+
+    rerender(
+      <DistrictCropPortfolio
+        district="Gasabo"
+        onOpenEvidence={() => undefined}
+        season="A"
+        year="2024/25"
+      />,
+    )
+    expect(cards()).toBe(1)
+  })
+
   it('selects a supported district through the shared search control', () => {
     const onDistrictSelect = vi.fn()
     const { rerender } = render(

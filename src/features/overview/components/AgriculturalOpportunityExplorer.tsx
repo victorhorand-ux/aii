@@ -1,8 +1,10 @@
 import { ArrowUpRight, FileSearch } from 'lucide-react'
+import { useState } from 'react'
 
 import { EvidenceStatusBadge } from '../../evidence/components/EvidenceStatusBadge'
 import { evidenceRecords } from '../../evidence/data/evidenceRecords'
 import type { AgriculturalSeason } from '../../../types/data-contract'
+import { useResponsiveGridColumns } from '../../../components/layout/useResponsiveGridColumns'
 import {
   getAgriculturalOpportunities,
   type AgriculturalOpportunityComparison,
@@ -20,6 +22,11 @@ interface AgriculturalOpportunityExplorerProps {
 function formatYield(value: number, unit: string): string {
   return `${value.toLocaleString('en-RW', { maximumFractionDigits: 1 })} ${unit}`
 }
+
+const opportunityGridBreakpoints = [
+  { minWidth: 768, columns: 2 },
+  { minWidth: 1536, columns: 3 },
+] as const
 
 function formatDifference(value: number, unit: string): string {
   return `${value.toLocaleString('en-RW', {
@@ -151,6 +158,10 @@ export function AgriculturalOpportunityExplorer({
   onOpenDistrictProfile,
   onOpenEvidence,
 }: AgriculturalOpportunityExplorerProps) {
+  const columns = useResponsiveGridColumns(opportunityGridBreakpoints)
+  const context = `${crop}|${season}|${year}|${selectedDistrict ?? ''}`
+  const [pagination, setPagination] = useState({ context, rows: 1 })
+  const visibleRows = pagination.context === context ? pagination.rows : 1
   const results = getAgriculturalOpportunities(evidenceRecords, {
     crop,
     season,
@@ -224,7 +235,7 @@ export function AgriculturalOpportunityExplorer({
                 </span>
               </h3>
               <div className="grid min-w-0 gap-3 md:grid-cols-2 2xl:grid-cols-3">
-                {belowReference.map((comparison) => (
+                {belowReference.slice(0, columns * visibleRows).map((comparison) => (
                   <ComparisonCard
                     comparison={comparison}
                     key={comparison.districtRecord.id}
@@ -251,7 +262,7 @@ export function AgriculturalOpportunityExplorer({
                 </span>
               </h3>
               <div className="grid min-w-0 gap-3 md:grid-cols-2 2xl:grid-cols-3">
-                {atOrAboveReference.map((comparison) => (
+                {atOrAboveReference.slice(0, columns * visibleRows).map((comparison) => (
                   <ComparisonCard
                     comparison={comparison}
                     key={comparison.districtRecord.id}
@@ -316,6 +327,16 @@ export function AgriculturalOpportunityExplorer({
               </ul>
             </details>
           )}
+          {belowReference.length > columns * visibleRows ||
+          atOrAboveReference.length > columns * visibleRows ? (
+            <button
+              className="inline-flex min-h-10 items-center rounded-lg border border-slate-300 px-4 text-sm font-semibold text-forest-950 hover:bg-sage-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-agri-700 focus-visible:ring-offset-2"
+              onClick={() => setPagination({ context, rows: visibleRows + 1 })}
+              type="button"
+            >
+              Show more
+            </button>
+          ) : null}
         </>
       )}
     </section>
