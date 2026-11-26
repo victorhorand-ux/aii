@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { ArrowRight, Droplets, FileSearch, Sprout } from 'lucide-react'
+import { ArrowRight, Droplets, Sprout } from 'lucide-react'
 
 import { evidenceRecords } from '../../evidence/data/evidenceRecords'
 import { EvidenceIndicatorIcon } from '../../evidence/components/EvidenceIndicatorIcon'
@@ -13,9 +13,7 @@ interface AgriculturalInsightPanelProps {
   season: string
   selectedDistrict?: string
   year: string
-  onOpenDistrictProfile: () => void
   onOpenInvestigationBrief: () => void
-  onOpenEvidence: () => void
 }
 
 function getSignalLabel(status: ProductivityGapStatus): string {
@@ -84,9 +82,7 @@ export function AgriculturalInsightPanel({
   season,
   selectedDistrict,
   year,
-  onOpenDistrictProfile,
   onOpenInvestigationBrief,
-  onOpenEvidence,
 }: AgriculturalInsightPanelProps) {
   const periodInsights = useMemo(
     () => getDistrictInsights(crop, season, year),

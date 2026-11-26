@@ -314,9 +314,7 @@ export function OverviewPage({
             season={filters.season}
             selectedDistrict={selectedDistrict}
             year={filters.year}
-            onOpenDistrictProfile={onOpenDistrictProfile}
             onOpenInvestigationBrief={onOpenInvestigationBrief}
-            onOpenEvidence={onOpenEvidence}
           />
         </div>
       </section>
